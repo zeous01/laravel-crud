@@ -14,4 +14,9 @@ export const employeeApi = {
   addFamily: (employeeId, data) => axios.post(`${API_URL}/employees/${employeeId}/families`, data),
   updateFamily: (employeeId, familyId, data) => axios.put(`${API_URL}/employees/${employeeId}/families/${familyId}`, data),
   deleteFamily: (employeeId, familyId) => axios.delete(`${API_URL}/employees/${employeeId}/families/${familyId}`),
+
+  getAllFamilies: (params = {}) => axios.get(`${API_URL}/families`, { params }),
+  getEmployeeFamilies(employeeId) {
+  return axios.get(`/api/employees/${employeeId}/families`);
+}
 };

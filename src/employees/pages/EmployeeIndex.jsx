@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import EmployeeList from '../components/EmployeeList';
 import { employeeApi } from '../services/api';
@@ -6,27 +6,55 @@ import { employeeApi } from '../services/api';
 export default function EmployeeIndex() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRows, setTotalRows] = useState(0);
   const [perPage, setPerPage] = useState(10);
 
-  const loadEmployees = async (page = 1) => {
+  // Server-side search filters (per column)
+  const [searchFilters, setSearchFilters] = useState({
+    name: '',
+    email: '',
+    designation: '',
+    department: '',
+  });
+
+  const debounceTimeout = useRef(null);
+
+  const debouncedLoadEmployees = () => {
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+    debounceTimeout.current = setTimeout(() => {
+      setCurrentPage(1); // search change pe page 1 pe jao
+      loadEmployees();
+    }, 600); // 600ms delay – adjust kar sakte ho (500-800 acha hai)
+  };
+
+  // Server-side sorting
+  const [sortField, setSortField] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
+
+  const loadEmployees = async () => {
     setLoading(true);
     try {
       const params = {
-        page,
+        page: currentPage,
         per_page: perPage,
-        search: searchTerm || undefined, // sirf non-empty bhejo
+        sort_field: sortField,
+        sort_direction: sortDirection,
+        // Only send non-empty filters
+        ...Object.fromEntries(
+          Object.entries(searchFilters).filter(([_, value]) => value.trim() !== '')
+        ),
       };
 
       const res = await employeeApi.getAll(params);
       const paginatedData = res.data;
 
-      setEmployees(paginatedData.data);              // actual employees array
-      setCurrentPage(paginatedData.current_page);
+      setEmployees(paginatedData.data);
       setTotalRows(paginatedData.total);
       setPerPage(paginatedData.per_page);
+      setCurrentPage(paginatedData.current_page);
     } catch (err) {
       console.error(err);
       alert('Error loading employees');
@@ -35,24 +63,24 @@ export default function EmployeeIndex() {
     }
   };
 
-  // Initial load + reload on search change
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentPage(1); // search karne pe first page pe jao
-      loadEmployees(1);
-    }, 500); // debounce 500ms
+    debouncedLoadEmployees();
 
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [searchFilters]);
 
-  // Page change se reload
+  // Reload whenever any filter, sort, page, or perPage changes
   useEffect(() => {
-    loadEmployees(currentPage);
-  }, [currentPage]);
+    loadEmployees();
+  }, [currentPage, perPage, sortField, sortDirection]);
 
   // Initial load
   useEffect(() => {
-    loadEmployees(1);
+    loadEmployees();
   }, []);
 
   const handleDelete = async (emp) => {
@@ -60,8 +88,7 @@ export default function EmployeeIndex() {
 
     try {
       await employeeApi.delete(emp.id);
-      // Reload current page after delete
-      loadEmployees(currentPage);
+      loadEmployees(); // reload same page
     } catch (err) {
       alert('Delete failed');
     }
@@ -71,15 +98,21 @@ export default function EmployeeIndex() {
     setCurrentPage(page);
   };
 
-  const handlePerRowsChange = async (newPerPage, page) => {
+  const handlePerRowsChange = (newPerPage, page) => {
     setPerPage(newPerPage);
     setCurrentPage(page);
-    loadEmployees(page);
   };
 
-  if (loading && employees.length === 0) {
-    return <p className="p-8 text-center">Loading employees...</p>;
-  }
+  const handleSearchChange = (newFilters) => {
+    setSearchFilters(newFilters);
+    setCurrentPage(1); // important: search change → go to page 1
+  };
+
+  const handleSortChange = (field, direction) => {
+    setSortField(field);
+    setSortDirection(direction);
+    setCurrentPage(1); // sort change → page 1
+  };
 
   return (
     <div className="p-8">
@@ -93,18 +126,8 @@ export default function EmployeeIndex() {
         </Link>
       </div>
 
-      {/* Search Box */}
-      <div className="mb-6 max-w-md">
-        <input
-          type="text"
-          placeholder="Search by name, email, department, CNIC..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
+      {/* Global search removed – ab per-column search hai table mein */}
 
-      {/* Employee Table */}
       <EmployeeList
         employees={employees}
         onDelete={handleDelete}
@@ -113,6 +136,13 @@ export default function EmployeeIndex() {
         handlePageChange={handlePageChange}
         handlePerRowsChange={handlePerRowsChange}
         perPage={perPage}
+        
+        // New props for server-side control
+        searchFilters={searchFilters}
+        onSearchChange={handleSearchChange}
+        currentSortField={sortField}
+        currentSortDirection={sortDirection}
+        onSortChange={handleSortChange}
       />
     </div>
   );

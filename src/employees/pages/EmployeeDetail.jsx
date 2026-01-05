@@ -80,6 +80,7 @@ export default function EmployeeDetail() {
         <p><strong>City:</strong> {employee.city}</p>
         <p><strong>Contact:</strong> {employee.contact}</p>
         <p><strong>CNIC:</strong> {employee.cnic}</p>
+        <p><strong>Address:</strong> {employee.address}</p>
       </div>
 
       <div className="bg-white shadow rounded-lg p-6">

@@ -7,6 +7,8 @@ import EditTodo from './pages/EditTodo';
 import EmployeeIndex from './employees/pages/EmployeeIndex';
 import EmployeeCreate from './employees/pages/EmployeeCreate';
 import EmployeeDetail from './employees/pages/EmployeeDetail';
+import FamilyIndex from './employees/pages/FamilyIndex';
+import EmployeeFamilyReport from './employees/pages/EmployeeFamilyReport';
 
 function App() {
   return (
@@ -44,6 +46,8 @@ function App() {
           <Route path="/employees" element={<EmployeeIndex />} />
         <Route path="/employees/create" element={<EmployeeCreate />} />
         <Route path="/employees/:id" element={<EmployeeDetail />} />
+        <Route path="/family" element={<FamilyIndex />} />
+        <Route path="/family/report" element={<EmployeeFamilyReport />} />
         </Routes>
       </main>
 

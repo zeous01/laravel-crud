@@ -81,6 +81,7 @@ const [currentPage, setCurrentPage] = useState(1); // For jump to page
       name: 'Title',
       selector: row => row.title,
       sortable: true,
+      width: '250px',
       style: {
         fontWeight: 'bold',
       },
@@ -89,13 +90,15 @@ const [currentPage, setCurrentPage] = useState(1); // For jump to page
       name: 'Description',
       selector: row => row.description,
       sortable: true,
+      width: '350px',
     },
     {
       name: 'Status',
       selector: row => row.completed ? 'Completed' : 'Pending',
       sortable: true,
+      width: '200px',
       cell: row => (
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+        <span className={`px-3 py-1 rounded-full text-xs font-medium text-align ${
           row.completed 
             ? 'bg-green-100 text-green-800' 
             : 'bg-yellow-100 text-yellow-800'
@@ -466,7 +469,7 @@ const downloadPDFbyFrontend = (todo) => {
   noDataComponent="No todos found 😔"
   subHeader                                    // ← Search box table ke upar dikhane ke liye
   subHeaderComponent={
-    <div className="w-full max-w-md">
+    <div className=" max-w-md">
       <input
         type="text"
         value={searchInput}
